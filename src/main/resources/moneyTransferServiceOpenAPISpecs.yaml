@@ -1,0 +1,356 @@
+openapi: 3.0.3
+info:
+  title: Money Transfer Service API
+  description: Backend API for managing users, accounts, and secure money transfers with currency conversion and rule validation.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/users:
+    post:
+      tags:
+        - Users
+      summary: Create a new user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/users/{userId}/accounts:
+    post:
+      tags:
+        - Accounts
+      summary: Create an account for a user
+      operationId: createAccount
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountRequest'
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/accounts/{accountNumber}:
+    get:
+      tags:
+        - Accounts
+      summary: View account details and current balance
+      operationId: getAccount
+      parameters:
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Account details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/transfers:
+    post:
+      tags:
+        - Transfers
+      summary: Transfer money between accounts
+      operationId: makeTransfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Transfer executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+        '422':
+          description: Transfer rejected due to rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Source or target account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/accounts/{accountNumber}/transfers:
+    get:
+      tags:
+        - Transfers
+      summary: View transfer history for an account
+      operationId: getTransferHistory
+      parameters:
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Transfer history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransferHistoryResponse'
+        '404':
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    UserRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - contactNumber
+        - address
+        - uniqueId
+      properties:
+        firstName:
+          type: string
+          example: Anna
+        lastName:
+          type: string
+          example: Schmidt
+        contactNumber:
+          type: string
+          example: "+31611111111"
+        address:
+          type: string
+          example: Amsterdam
+        uniqueId:
+          type: string
+          example: UID-1001
+
+    UserResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          example: 1
+        firstName:
+          type: string
+          example: Anna
+        lastName:
+          type: string
+          example: Schmidt
+        contactNumber:
+          type: string
+          example: "+31611111111"
+        address:
+          type: string
+          example: Amsterdam
+        uniqueId:
+          type: string
+          example: UID-1001
+
+    AccountRequest:
+      type: object
+      required:
+        - accountType
+        - currency
+      properties:
+        accountType:
+          type: string
+          example: CHECKING
+        currency:
+          type: string
+          example: EUR
+        initialBalance:
+          type: number
+          format: decimal
+          example: 1000.00
+
+    AccountResponse:
+      type: object
+      properties:
+        accountNumber:
+          type: integer
+          format: int64
+          example: 1
+        userId:
+          type: integer
+          format: int64
+          example: 1
+        accountType:
+          type: string
+          example: CHECKING
+        currency:
+          type: string
+          example: EUR
+        balance:
+          type: number
+          format: decimal
+          example: 800.00
+
+    TransferRequest:
+      type: object
+      required:
+        - sourceAccountNumber
+        - targetAccountNumber
+        - amount
+      properties:
+        sourceAccountNumber:
+          type: integer
+          format: int64
+          example: 1
+        targetAccountNumber:
+          type: integer
+          format: int64
+          example: 2
+        amount:
+          type: number
+          format: decimal
+          example: 200.00
+
+    TransferResponse:
+      type: object
+      properties:
+        transferId:
+          type: integer
+          format: int64
+          example: 10
+        sourceAccountNumber:
+          type: integer
+          format: int64
+          example: 1
+        targetAccountNumber:
+          type: integer
+          format: int64
+          example: 2
+        amountSent:
+          type: number
+          format: decimal
+          example: 100.00
+        amountReceived:
+          type: number
+          format: decimal
+          example: 110.00
+        exchangeRate:
+          type: number
+          format: decimal
+          example: 1.1000
+        status:
+          type: string
+          example: SUCCESS
+        dateOfTransfer:
+          type: string
+          format: date-time
+          example: "2026-03-10T14:30:00Z"
+
+    TransferHistoryResponse:
+      type: object
+      properties:
+        transferId:
+          type: integer
+          format: int64
+          example: 10
+        sourceAccountNumber:
+          type: integer
+          format: int64
+          example: 1
+        targetAccountNumber:
+          type: integer
+          format: int64
+          example: 2
+        amountSent:
+          type: number
+          format: decimal
+          example: 100.00
+        amountReceived:
+          type: number
+          format: decimal
+          example: 110.00
+        exchangeRate:
+          type: number
+          format: decimal
+          example: 1.1000
+        status:
+          type: string
+          example: SUCCESS
+        failureReason:
+          type: string
+          nullable: true
+          example: null
+        dateOfTransfer:
+          type: string
+          format: date-time
+          example: "2026-03-10T14:30:00Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - trace-id
+        - status
+        - message
+      properties:
+        trace-id:
+          type: string
+          example: "7c1d9e2a-4b6f-4f0e-9c3a-2e5b8a1d6f40"
+        status:
+          type: integer
+          example: 422
+        message:
+          type: string
+          example: "Rules violated: Single transfer limit, Cross-currency limit"
