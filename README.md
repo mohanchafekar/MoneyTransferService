@@ -1,6 +1,8 @@
 # Money Transfer Service
 
 A robust, contract-first **Money Transfer Microservice** built with **Spring Boot 3.4+** and **Java 25**. This service facilitates secure account-to-account money transfers, supports cross-currency conversions using the external Frankfurter API, and maintains an immutable audit trail of all transactions.
+ 
+This application has the APIs to create users, create account for the users, transfer money from one account to another and convert to different currency if required.
 
 * **GitHub Repository:** [https://github.com/mohanchafekar/MoneyTransferService.git](https://github.com/mohanchafekar/MoneyTransferService.git)
 
