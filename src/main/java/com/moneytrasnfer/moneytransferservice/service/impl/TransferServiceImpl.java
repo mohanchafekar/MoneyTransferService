@@ -86,7 +86,9 @@ public class TransferServiceImpl implements TransferService {
             failedTransfer.setSourceAccountNumber(sourceAccount.getAccountNumber());
             failedTransfer.setTargetAccountNumber(targetAccount.getAccountNumber());
             failedTransfer.setAmountSent(amount);
+            failedTransfer.setAmountSentCurrency(sourceAccount.getCurrency());
             failedTransfer.setAmountReceived(BigDecimal.ZERO);
+            failedTransfer.setAmountReceivedCurrency(targetAccount.getCurrency());
             failedTransfer.setStatus("REJECTED");
             failedTransfer.setFailureReason(failureMessage);
             transferRepository.save(failedTransfer);
@@ -114,7 +116,9 @@ public class TransferServiceImpl implements TransferService {
         successTransfer.setSourceAccountNumber(sourceAccount.getAccountNumber());
         successTransfer.setTargetAccountNumber(targetAccount.getAccountNumber());
         successTransfer.setAmountSent(amount);
+        successTransfer.setAmountSentCurrency(sourceAccount.getCurrency());
         successTransfer.setAmountReceived(amountReceived);
+        successTransfer.setAmountReceivedCurrency(targetAccount.getCurrency());
         successTransfer.setExchangeRate(exchangeRate);
         successTransfer.setStatus("SUCCESS");
         transferRepository.save(successTransfer);

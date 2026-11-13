@@ -29,8 +29,14 @@ public class TransferEntity {
     @Column(nullable = false, precision = 15, scale = 4)
     private BigDecimal amountSent;
 
+    @Column(name = "amount_sent_currency", nullable = false)
+    private String amountSentCurrency;
+
     @Column(nullable = false, precision = 15, scale = 4)
     private BigDecimal amountReceived;
+
+    @Column(name = "amount_received_currency", nullable = false)
+    private String amountReceivedCurrency;
 
     @Column(precision = 15, scale = 6)
     private BigDecimal exchangeRate;
