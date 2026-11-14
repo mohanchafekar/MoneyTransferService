@@ -11,6 +11,7 @@ import com.moneytrasnfer.moneytransferservice.model.TransferRequest;
 import com.moneytrasnfer.moneytransferservice.model.TransferResponse;
 import com.moneytrasnfer.moneytransferservice.repository.AccountRepository;
 import com.moneytrasnfer.moneytransferservice.repository.TransferRepository;
+import com.moneytrasnfer.moneytransferservice.service.AuditService;
 import com.moneytrasnfer.moneytransferservice.service.TransferService;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -32,6 +33,7 @@ public class TransferServiceImpl implements TransferService {
     private final AccountRepository accountRepository;
     private final TransferRepository transferRepository;
     private final RestTemplate restTemplate;
+    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -91,7 +93,8 @@ public class TransferServiceImpl implements TransferService {
             failedTransfer.setAmountReceivedCurrency(targetAccount.getCurrency());
             failedTransfer.setStatus("REJECTED");
             failedTransfer.setFailureReason(failureMessage);
-            transferRepository.save(failedTransfer);
+
+            auditService.saveFailedTransfer(failedTransfer);
 
             throw new FunctionalException(FunctionalErrorCode.TRANSFER_RULE_VIOLATION, failureMessage);
         }

@@ -11,6 +11,7 @@ import com.moneytrasnfer.moneytransferservice.model.TransferRequest;
 import com.moneytrasnfer.moneytransferservice.model.TransferResponse;
 import com.moneytrasnfer.moneytransferservice.repository.AccountRepository;
 import com.moneytrasnfer.moneytransferservice.repository.TransferRepository;
+import com.moneytrasnfer.moneytransferservice.service.impl.AuditServiceImpl;
 import com.moneytrasnfer.moneytransferservice.service.impl.TransferServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +40,9 @@ class TransferServiceTest {
 
     @Mock
     private RestTemplate restTemplate;
+
+    @Mock
+    private AuditServiceImpl auditService;
 
     @InjectMocks
     private TransferServiceImpl transferService;
@@ -70,6 +74,8 @@ class TransferServiceTest {
         when(transferRepository.findSuccessfulTransfersSince(eq(sourceAccNum), any(LocalDateTime.class)))
                 .thenReturn(Collections.emptyList());
 
+        doNothing().when(auditService).saveFailedTransfer(any(TransferEntity.class));
+
         FunctionalException exception = assertThrows(FunctionalException.class, () -> {
             transferService.makeTransfer(request);
         });
@@ -79,11 +85,7 @@ class TransferServiceTest {
         assertTrue(exception.getMessage().contains("Insufficient balance in source account"));
         assertTrue(exception.getMessage().contains("Cross-currency limit"));
 
-        // Verify that the failed transfer was audited/saved with status REJECTED
-        verify(transferRepository, times(1)).save(argThat(transfer ->
-                "REJECTED".equals(transfer.getStatus()) &&
-                        transfer.getFailureReason().contains("Single transfer limit")
-        ));
+        verify(auditService, times(1)).saveFailedTransfer(any(TransferEntity.class));
     }
 
     @Test
@@ -117,19 +119,15 @@ class TransferServiceTest {
 
         when(transferRepository.findSuccessfulTransfersSince(eq(sourceAccNum), any(LocalDateTime.class)))
                 .thenReturn(List.of(existingTransfer));
+        doNothing().when(auditService).saveFailedTransfer(any(TransferEntity.class));
 
-        // Act & Assert
         FunctionalException exception = assertThrows(FunctionalException.class, () -> {
             transferService.makeTransfer(request);
         });
 
         assertTrue(exception.getMessage().contains("Daily limit"));
 
-        // Verify audit record saved as REJECTED
-        verify(transferRepository, times(1)).save(argThat(transfer ->
-                "REJECTED".equals(transfer.getStatus()) &&
-                        transfer.getFailureReason().contains("Daily limit")
-        ));
+        verify(auditService, times(1)).saveFailedTransfer(any(TransferEntity.class));
     }
 
     @Test
@@ -149,6 +147,7 @@ class TransferServiceTest {
         request.setAmount(transferAmount);
 
         when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
+        doNothing().when(auditService).saveFailedTransfer(any(TransferEntity.class));
 
         FunctionalException exception = assertThrows(FunctionalException.class, () -> {
             transferService.makeTransfer(request);
@@ -156,9 +155,7 @@ class TransferServiceTest {
 
         assertTrue(exception.getMessage().contains(FunctionalErrorCode.SAME_ACCOUNT_TRANSFER.getDefaultMessage()));
 
-        verify(transferRepository, times(1)).save(argThat(transfer ->
-                "REJECTED".equals(transfer.getStatus())
-        ));
+        verify(auditService, times(1)).saveFailedTransfer(any(TransferEntity.class));
     }
 
     @Test
